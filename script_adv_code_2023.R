@@ -42,7 +42,7 @@ mutate(premier = str_extract(V1,pattern = "\\d+|one|two|three|four|five|six|seve
     #Somme des chiffres accolés
     somme = sum(as.numeric(paste0(premier_u, dernier_u))))
 
-##DAY 2 ####
+## DAY 2 ####
 #Chargement de l'input
 input <- read_excel("data/jour2.xlsm", col_names = FALSE )
 
@@ -81,3 +81,69 @@ data_temp_2 <- data_temp %>%
   ungroup()%>%
   summarise(tot_power = sum(power))
   
+
+## DAY 3 ####
+#Chargement de l'input
+input <- read_excel("data/input_3.xlsm", col_names = FALSE )
+
+#récupération des emplacement des caractères spéciaux
+data_caract <- input %>%
+  rename (schema = ...1)%>%
+  mutate(
+    #ajouter un numéro identifiant
+    n_ligne = row_number(),
+    location = str_locate_all(schema, pattern = "[^[:alnum:]\\s.]" ))%>%
+  unnest(location)%>%
+  mutate(n_colonne = location[,1])%>%
+  select(n_ligne, n_colonne)
+
+data_numerique <- input %>%
+  rename (schema = ...1)%>%
+  mutate(
+    #ajouter un numéro identifiant
+    n_ligne_nb = row_number(),
+    location = str_locate_all(schema, pattern = "\\d+"),
+    liste_num = str_extract_all(schema, pattern = "\\d+"),
+    numerique_1 = map_int(liste_num, ~as.numeric(.x[1])),
+    numerique_2 = map_int(liste_num, ~as.numeric(.x[2])),
+    numerique_3 = map_int(liste_num, ~as.numeric(.x[3])),
+    numerique_5 = map_int(liste_num, ~as.numeric(.x[5])),
+    numerique_4 = map_int(liste_num, ~as.numeric(.x[4])),
+    numerique_6 = map_int(liste_num, ~as.numeric(.x[6])),
+    numerique_7 = map_int(liste_num, ~as.numeric(.x[7])),
+    numerique_8 = map_int(liste_num, ~as.numeric(.x[8])),
+    numerique_9 = map_int(liste_num, ~as.numeric(.x[9])),
+    numerique_10 = map_int(liste_num, ~as.numeric(.x[10])),
+    numerique_11 = map_int(liste_num, ~as.numeric(.x[11])),
+    numerique_12 = map_int(liste_num, ~as.numeric(.x[12])),
+    numerique_13 = map_int(liste_num, ~as.numeric(.x[13])),
+    numerique_14 = map_int(liste_num, ~as.numeric(.x[14])),
+    numerique_15 = map_int(liste_num, ~as.numeric(.x[15])),
+    numerique_16 = map_int(liste_num, ~as.numeric(.x[16])),
+    numerique_17 = map_int(liste_num, ~as.numeric(.x[17]))
+    )%>%
+  # Utiliser unnest pour séparer les listes
+  unnest(location)%>%
+  mutate(n_colonne_debut = location[,1],
+         n_colonne_fin = location[,2])%>%
+  select(n_ligne_nb, n_colonne_debut,n_colonne_fin, liste_num, numerique_1,
+         numerique_2, numerique_3, numerique_4,
+         numerique_5,numerique_6,numerique_7,numerique_8,numerique_9,
+         numerique_10,numerique_11,numerique_12,numerique_13,numerique_14,numerique_15,
+         numerique_16, numerique_17)
+
+data_numerique_pos<- data_numerique %>%
+  select(n_ligne_nb,n_colonne_debut, n_colonne_fin)%>%
+  distinct()
+
+  data_numerique_tot <- data_numerique %>%
+    pivot_longer(cols = starts_with("numerique_"),
+               names_to = "position_liste",
+               values_to = "numerique")%>%
+    drop_na()%>%
+    select(n_ligne_nb, numerique)%>%
+    left_join(data_numerique_pos)
+
+
+
+
