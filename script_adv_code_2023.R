@@ -102,7 +102,9 @@ data_numerique <- input %>%
   mutate(
     #ajouter un numéro identifiant
     n_ligne_nb = row_number(),
+    #récupérer les localisation des nombres
     location = str_locate_all(schema, pattern = "\\d+"),
+    #récupérer les nombres
     liste_num = str_extract_all(schema, pattern = "\\d+"),
     numerique_1 = map_int(liste_num, ~as.numeric(.x[1])),
     numerique_2 = map_int(liste_num, ~as.numeric(.x[2])),
@@ -124,6 +126,7 @@ data_numerique <- input %>%
     )%>%
   # Utiliser unnest pour séparer les listes
   unnest(location)%>%
+  #récupérer la colonne de début et de fin de chaque nombre
   mutate(n_colonne_debut = location[,1],
          n_colonne_fin = location[,2])%>%
   select(n_ligne_nb, n_colonne_debut,n_colonne_fin, liste_num, numerique_1,
@@ -134,7 +137,9 @@ data_numerique <- input %>%
 
 data_numerique_pos<- data_numerique %>%
   select(n_ligne_nb,n_colonne_debut, n_colonne_fin)%>%
-  distinct()
+  distinct()%>%
+  #ajouter un identifiant
+  mutate(id = row_number())
 
   data_numerique_tot <- data_numerique %>%
     pivot_longer(cols = starts_with("numerique_"),
@@ -142,6 +147,11 @@ data_numerique_pos<- data_numerique %>%
                values_to = "numerique")%>%
     drop_na()%>%
     select(n_ligne_nb, numerique)%>%
+    #enlever les doublons
+    distinct()%>%
+    #ajouter un identifiant
+    mutate(id = row_number())%>%
+    #jointure par l'id
     left_join(data_numerique_pos)
 
 
