@@ -83,6 +83,7 @@ data_temp_2 <- data_temp %>%
   
 
 ## DAY 3 ####
+# ETOILE 1
 #Chargement de l'input
 input <- read_excel("data/input_3.xlsm", col_names = FALSE )
 
@@ -95,8 +96,30 @@ data_caract <- input %>%
     location = str_locate_all(schema, pattern = "[^[:alnum:]\\s.]" ))%>%
   unnest(location)%>%
   mutate(n_colonne = location[,1])%>%
-  select(n_ligne, n_colonne)
+  select(n_ligne, n_colonne)%>%
+  #Définir la plage où les numériques seront valides
+  mutate(n_ligne_prec = n_ligne - 1,
+         n_ligne_suiv = n_ligne + 1,
+         n_colonne_prec = n_colonne -1,
+         n_colonne_suiv = n_colonne + 1,
+         #définir un identifiant par caratère
+         id_cara = row_number())%>%
+  #pivot lignes
+  pivot_longer(starts_with("n_ligne"),
+               names_to = "lignes",
+               values_to = "val_ligne")%>%
+  #pivot colonnes
+  pivot_longer(starts_with("n_colonne"),
+               names_to = "colonnes",
+               values_to = "val_colonne")%>%
+  #selection colonnes
+  select(val_ligne, val_colonne, id_cara)%>%
+  #ajouter une valeur adjacent_symbole et une valeur ligne_col, un identifiant
+  mutate(adjacent_symbole = 1,
+         ligne_col = paste0(val_ligne, "_", val_colonne))
 
+
+#Récupération des nombres et leur position
 data_numerique <- input %>%
   rename (schema = ...1)%>%
   mutate(
@@ -146,14 +169,51 @@ data_numerique_pos<- data_numerique %>%
                names_to = "position_liste",
                values_to = "numerique")%>%
     drop_na()%>%
-    select(n_ligne_nb, numerique)%>%
+    select(n_ligne_nb, numerique, position_liste)%>%
     #enlever les doublons
     distinct()%>%
     #ajouter un identifiant
     mutate(id = row_number())%>%
     #jointure par l'id
-    left_join(data_numerique_pos)
+    left_join(data_numerique_pos)%>%
+    #Ajouter les numéros de colonnes concernés
+    mutate(n_colonne_milieu = ifelse(n_colonne_fin - n_colonne_debut == 2, n_colonne_debut + 1,
+                                     n_colonne_debut))%>%
+    #pivot des colonnes
+    pivot_longer(starts_with("n_colonne"),
+                 values_to = "num_colonne",
+                 names_to = "type_colonne")%>%
+    #retirer les champs inutiles
+    select(-position_liste, -type_colonne)%>%
+    distinct()%>%
+    #création de l'indice ligne_colonne
+    mutate(ligne_col = paste0(n_ligne_nb, "_", num_colonne))
 
 
+#Jointure des tables numériques et symboles
+  data_final <- data_numerique_tot %>%
+    left_join(data_caract, by = "ligne_col")%>%
+    #récupérer la somme des chiffres qui sont adjacent à un symbole
+    select(id, numerique, adjacent_symbole)%>%
+    drop_na()%>%
+    distinct()%>%
+    summarise(total = sum(numerique))
 
-
+  # ETOILE 2
+  
+  #récupérer les numériques qui sont adjacent à un même symbole
+  data_final <- data_numerique_tot %>%
+    left_join(data_caract, by = "ligne_col")%>%
+    drop_na()%>%
+    select(id, numerique, id_cara)%>%
+    distinct()%>%
+    #regarder tous les caractères qui sont en double
+    group_by(id_cara)%>%
+    mutate(occurence_car = n())%>%
+    filter(occurence_car > 1)%>%
+    #multiplier par id_car les numériques
+    summarise(multiplication = prod(numerique))%>%
+    ungroup()%>%
+    summarise(somme_multiplication = sum(multiplication))
+    
+    
