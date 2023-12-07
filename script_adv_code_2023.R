@@ -217,3 +217,87 @@ data_numerique_pos<- data_numerique %>%
     summarise(somme_multiplication = sum(multiplication))
     
     
+
+## DAY 4 ####
+  # ETOILE 1
+  #Chargement de l'input
+  input <- read_excel("data/input_4.xlsm", col_names = TRUE )
+
+  # Enregistrez le temps de départ
+  temps_debut <- Sys.time()
+  
+  #manip data
+  #Récupérer la liste des numéro gagnants et la liste des numéro de la carte
+  #prendre les numéros qui sont présents dans les 2 listes
+  
+  data_temp <-input %>%
+    mutate(#extraires les nombres des 2 listes
+      win_nb_liste = str_extract_all(win_nb, pattern = "\\d+"),
+      card_nb_liste = str_extract_all(card_nb, pattern = "\\d+"),
+      # regarder les nombres présents dans les 2 listes
+      intersection = map2(win_nb_liste, card_nb_liste, ~intersect(.x,.y)),
+      #compter le nb d'éléments communs
+      nb_elements_com = lengths(intersection),
+      #appliquer les scores en fonction du nb d'éléments communs
+      score = case_when(nb_elements_com == 1 ~ 1,
+                        nb_elements_com == 0 ~ 0,
+                        .default = 2^(nb_elements_com - 1)),
+      #faire la somme des score
+      tot_points = sum(score)
+      )
+  
+  # Enregistrez le temps à la fin de votre code
+  temps_fin <- Sys.time()
+  
+  # Calculez la différence
+  temps_execution <- as.numeric(difftime(temps_fin, temps_debut, units = "secs"))
+  
+  # Affichez le temps d'exécution en millisecondes
+  cat("Temps d'exécution:", round(temps_execution , 6), "secondes\n")
+     
+
+  # ETOILE 2
+  data_temp2 <- data_temp %>%
+    select(num_card, nb_elements_com)%>%
+    filter(nb_elements_com != 0)%>%
+    mutate(num_deb = num_card,
+           num_2= ifelse(nb_elements_com >=1, num_card +1, 0),
+           num_3= ifelse(nb_elements_com >=2, num_card +2, 0),
+           num_4= ifelse(nb_elements_com >=3, num_card +3, 0),
+           num_5= ifelse(nb_elements_com >=4, num_card +4, 0),
+           num_6= ifelse(nb_elements_com >=5, num_card +5, 0),
+           num_7= ifelse(nb_elements_com >=6, num_card +6, 0),
+           num_8= ifelse(nb_elements_com >=7, num_card +7, 0),
+           num_9= ifelse(nb_elements_com >=8, num_card +8, 0),
+           num_10 = ifelse(nb_elements_com >=9, num_card +9, 0),
+           num_11 = ifelse(nb_elements_com >=10, num_card +10, 0)) %>%
+      rename(numero_carte = num_card)%>%
+     pivot_longer(starts_with("num_"),
+                names_to = "numero",
+                values_to = "nb_doubles"
+                )%>%
+    filter(nb_doubles != 0)%>%
+    group_by(nb_doubles)%>%
+    summarise(premier_multiplicateur = n())
+    
+
+  data_temp3 <- data_temp %>%
+    select(num_card, nb_elements_com)%>%
+    filter(nb_elements_com != 0)%>%
+    mutate(num_deb = num_card,
+           num_2= ifelse(nb_elements_com >=1, num_card +1, 0),
+           num_3= ifelse(nb_elements_com >=2, num_card +2, 0),
+           num_4= ifelse(nb_elements_com >=3, num_card +3, 0),
+           num_5= ifelse(nb_elements_com >=4, num_card +4, 0),
+           num_6= ifelse(nb_elements_com >=5, num_card +5, 0),
+           num_7= ifelse(nb_elements_com >=6, num_card +6, 0),
+           num_8= ifelse(nb_elements_com >=7, num_card +7, 0),
+           num_9= ifelse(nb_elements_com >=8, num_card +8, 0),
+           num_10 = ifelse(nb_elements_com >=9, num_card +9, 0),
+           num_11 = ifelse(nb_elements_com >=10, num_card +10, 0)) %>%
+    rename(numero_carte = num_card)%>%
+    pivot_longer(starts_with("num_"),
+                 names_to = "numero",
+                 values_to = "nb_doubles"
+    )
+  
