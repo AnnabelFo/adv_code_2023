@@ -300,4 +300,110 @@ data_numerique_pos<- data_numerique %>%
                  names_to = "numero",
                  values_to = "nb_doubles"
     )
+
+
+  # ETOILE 2 TEST ####
+ matrice_gagnant <- data_temp %>%
+    select(num_card, nb_elements_com)%>%
+    filter(nb_elements_com != 0)%>%
+    mutate(#num_initial = num_card,
+           num_2= ifelse(nb_elements_com >=1, num_card +1, 0),
+           num_3= ifelse(nb_elements_com >=2, num_card +2, 0),
+           num_4= ifelse(nb_elements_com >=3, num_card +3, 0),
+           num_5= ifelse(nb_elements_com >=4, num_card +4, 0),
+           num_6= ifelse(nb_elements_com >=5, num_card +5, 0),
+           num_7= ifelse(nb_elements_com >=6, num_card +6, 0),
+           num_8= ifelse(nb_elements_com >=7, num_card +7, 0),
+           num_9= ifelse(nb_elements_com >=8, num_card +8, 0),
+           num_10 = ifelse(nb_elements_com >=9, num_card +9, 0),
+           num_11 = ifelse(nb_elements_com >=10, num_card +10, 0)) %>%
+      rename(numero_carte = num_card)%>%
+    select(-nb_elements_com)
   
+  data_copie1 <- matrice_gagnant%>%
+    mutate(tot_copie0 = n())%>%
+     pivot_longer(starts_with("num_"),
+                names_to = "numero",
+                values_to = "copie_1"
+                )%>%
+    filter(copie_1 != 0)%>%
+    select(-numero) %>%
+    #calculer le nombre de copie_1
+    mutate(tot_copie1 = n())
+
+
+  data_copie2 <- data_copie1 %>%
+    left_join(matrice_gagnant, by = c("copie_1" = "numero_carte"))%>%
+    pivot_longer(starts_with("num_"),
+                 names_to = "numero",
+                 values_to = "copie_2")%>%
+    filter(copie_2 != 0)%>%
+    select(-numero)%>%
+  #calculer le nombre de copie_2
+  mutate(tot_copie2 = n())
+  
+  ##TEST
+  numero_copie_n1 <- 2
+  
+  data_copie2_test <- data_copie1 %>%
+    left_join(matrice_gagnant, 
+              by = setNames("numero_carte", paste0("copie_", numero_copie_n1 - 1)))%>%
+              #by = c(paste0("copie_", numero_copie_n1 -1) = "numero_carte"))%>%
+    pivot_longer(starts_with("num_"),
+                 names_to = "numero",
+                 values_to = paste0("copie_", numero_copie_n1) )%>%
+    filter(across(everything(), ~. != 0)) %>%
+    select(-numero)%>%
+    #calculer le nombre de copie_2
+    mutate(!!paste0("tot_copie_", numero_copie_n1) := n(),
+           tot_copie = n())  
+  nb_copie <- data_copie2_test$tot_copie[1]
+  
+  #Création d'une fonction pour ajouter une colonne de num de carte copiées
+  calcul_copie <- function(numero_copie_n1, data_copie_n){
+    data_copie_n1 <- data_copie_n %>% 
+      mutate_all(as.character)%>%
+      left_join(matrice_gagnant%>% mutate_all(as.character), 
+                by = setNames("numero_carte", paste0("copie_", numero_copie_n1 - 1)))%>%
+      #by = c(paste0("copie_", numero_copie_n1 -1) = "numero_carte"))%>%
+      pivot_longer(starts_with("num_"),
+                   names_to = "numero",
+                   values_to = paste0("copie_", numero_copie_n1) )%>%
+      filter(across(everything(), ~. != 0)) %>%
+      select(-numero)%>%
+      #calculer le nombre de copie_2
+      mutate(!!paste0("tot_copie_", numero_copie_n1) := n())
+      return(data_copie_n1)
+  }
+  
+  data_copie3 <- calcul_copie(3, data_copie2)
+  data_copie4 <- calcul_copie(4, data_copie3)
+  data_copie5 <- calcul_copie(5, data_copie4)
+  data_copie6 <- calcul_copie(6, data_copie5)
+  data_copie4<-calcul_copie(4, data_copie3)
+  data_copie5<-calcul_copie(5, data_copie4)
+  data_copie6<-calcul_copie(6, data_copie5)
+  data_copie7<-calcul_copie(7, data_copie6)
+  data_copie8<-calcul_copie(8, data_copie7)
+  data_copie9<-calcul_copie(9, data_copie8)
+  data_copie10<-calcul_copie(10, data_copie9)
+  data_copie11<-calcul_copie(11, data_copie10)
+  data_copie12<-calcul_copie(12, data_copie11)
+  data_copie13<-calcul_copie(13, data_copie12)
+  data_copie14<-calcul_copie(14, data_copie13)
+  data_copie15<-calcul_copie(15, data_copie14)
+  data_copie16<-calcul_copie(16, data_copie15)
+  data_copie17<-calcul_copie(17, data_copie16)
+  data_copie18<-calcul_copie(18, data_copie17)
+  data_copie19<-calcul_copie(19, data_copie18)
+  data_copie20<-calcul_copie(20, data_copie19)
+  data_copie21<-calcul_copie(21, data_copie20)
+  data_copie22<-calcul_copie(22, data_copie21)
+
+  
+  data_final <- data_copie22%>%
+    mutate_all(as.numeric)%>%
+    pivot_longer(cols = starts_with("tot_copie"),
+                 names_to = "copies",
+                 values_to = "nb_copies")%>%
+    summarise(somme_nb_copie = sum(nb_copies))
