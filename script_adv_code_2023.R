@@ -306,8 +306,7 @@ data_numerique_pos<- data_numerique %>%
  matrice_gagnant <- data_temp %>%
     select(num_card, nb_elements_com)%>%
     filter(nb_elements_com != 0)%>%
-    mutate(#num_initial = num_card,
-           num_2= ifelse(nb_elements_com >=1, num_card +1, 0),
+    mutate(num_2= ifelse(nb_elements_com >=1, num_card +1, 0),
            num_3= ifelse(nb_elements_com >=2, num_card +2, 0),
            num_4= ifelse(nb_elements_com >=3, num_card +3, 0),
            num_5= ifelse(nb_elements_com >=4, num_card +4, 0),
@@ -321,8 +320,7 @@ data_numerique_pos<- data_numerique %>%
     select(-nb_elements_com)
   
   data_copie1 <- matrice_gagnant%>%
-    mutate(tot_copie0 = n())%>%
-     pivot_longer(starts_with("num_"),
+    pivot_longer(starts_with("num_"),
                 names_to = "numero",
                 values_to = "copie_1"
                 )%>%
@@ -330,7 +328,6 @@ data_numerique_pos<- data_numerique %>%
     select(-numero) %>%
     #calculer le nombre de copie_1
     mutate(tot_copie1 = n())
-
 
   data_copie2 <- data_copie1 %>%
     left_join(matrice_gagnant, by = c("copie_1" = "numero_carte"))%>%
@@ -342,24 +339,7 @@ data_numerique_pos<- data_numerique %>%
   #calculer le nombre de copie_2
   mutate(tot_copie2 = n())
   
-  ##TEST
-  numero_copie_n1 <- 2
-  
-  data_copie2_test <- data_copie1 %>%
-    left_join(matrice_gagnant, 
-              by = setNames("numero_carte", paste0("copie_", numero_copie_n1 - 1)))%>%
-              #by = c(paste0("copie_", numero_copie_n1 -1) = "numero_carte"))%>%
-    pivot_longer(starts_with("num_"),
-                 names_to = "numero",
-                 values_to = paste0("copie_", numero_copie_n1) )%>%
-    filter(across(everything(), ~. != 0)) %>%
-    select(-numero)%>%
-    #calculer le nombre de copie_2
-    mutate(!!paste0("tot_copie_", numero_copie_n1) := n(),
-           tot_copie = n())  
-  nb_copie <- data_copie2_test$tot_copie[1]
-  
-  #Création d'une fonction pour ajouter une colonne de num de carte copiées
+    #Création d'une fonction pour ajouter une colonne de num de carte copiées
   calcul_copie <- function(numero_copie_n1, data_copie_n){
     data_copie_n1 <- data_copie_n %>% 
       mutate_all(as.character)%>%
@@ -407,3 +387,8 @@ data_numerique_pos<- data_numerique %>%
                  names_to = "copies",
                  values_to = "nb_copies")%>%
     summarise(somme_nb_copie = sum(nb_copies))
+
+#Calcul du nombre de cartes final
+nb_cartes <- data_final$somme_nb_copie + nrow(input)
+print(nb_cartes)
+
